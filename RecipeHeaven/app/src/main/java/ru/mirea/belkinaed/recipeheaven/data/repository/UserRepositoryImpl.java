@@ -6,7 +6,7 @@ import ru.mirea.belkinaed.recipeheaven.domain.repository.UserRepository;
 public class UserRepositoryImpl implements UserRepository {
     private User fake = new User(1,"ivan", "about ivan");
     @Override
-    public User getUser(int id) {
+    public User getUser() {
         return fake;
     }
 
@@ -26,7 +26,7 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
-    public boolean LogOut(int id) {
+    public boolean LogOut() {
         return false;
     }
 }
