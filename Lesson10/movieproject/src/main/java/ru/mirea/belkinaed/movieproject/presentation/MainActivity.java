@@ -8,6 +8,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import ru.mirea.belkinaed.movieproject.R;
 import ru.mirea.belkinaed.movieproject.data.repository.MovieRepositoryImpl;
+import ru.mirea.belkinaed.movieproject.data.storage.MovieStorage;
+import ru.mirea.belkinaed.movieproject.data.storage.sharedprefs.SharedPrefMovieStorage;
 import ru.mirea.belkinaed.movieproject.domain.models.Movie;
 import ru.mirea.belkinaed.movieproject.domain.repositoty.MovieRepository;
 import ru.mirea.belkinaed.movieproject.domain.usecases.GetFavoriteFilmUseCase;
@@ -22,7 +24,8 @@ public class MainActivity extends AppCompatActivity {
 
         EditText text = findViewById(R.id.editTextMovie);
         TextView textView = findViewById(R.id.textViewMovie);
-        MovieRepository movieRepository = new MovieRepositoryImpl(this);
+        MovieStorage sharedPrefMovieStorage = new SharedPrefMovieStorage(this);
+        MovieRepository movieRepository = new MovieRepositoryImpl(sharedPrefMovieStorage);
 
         findViewById(R.id.buttonSaveMovie).setOnClickListener(view -> {
             Boolean result = new SaveFilmToFavoriteUseCase(movieRepository).execute(
