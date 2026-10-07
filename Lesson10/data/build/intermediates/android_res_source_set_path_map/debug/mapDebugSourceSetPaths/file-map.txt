@@ -1,0 +1,9 @@
+ru.mirea.belkinaed.data-pngs-0 C:\Projects\AndroidStudio\MobileDev_2\Lesson10\data\build\generated\res\pngs\debug
+ru.mirea.belkinaed.data-updated_navigation_xml-1 C:\Projects\AndroidStudio\MobileDev_2\Lesson10\data\build\generated\updated_navigation_xml\debug
+ru.mirea.belkinaed.data-mergeDebugResources-2 C:\Projects\AndroidStudio\MobileDev_2\Lesson10\data\build\intermediates\incremental\debug\mergeDebugResources\merged.dir
+ru.mirea.belkinaed.data-mergeDebugResources-3 C:\Projects\AndroidStudio\MobileDev_2\Lesson10\data\build\intermediates\incremental\debug\mergeDebugResources\stripped.dir
+ru.mirea.belkinaed.data-debug-4 C:\Projects\AndroidStudio\MobileDev_2\Lesson10\data\build\intermediates\merged_res\debug\mergeDebugResources
+ru.mirea.belkinaed.data-debug-5 C:\Projects\AndroidStudio\MobileDev_2\Lesson10\data\build\intermediates\packaged_res\debug\packageDebugResources
+ru.mirea.belkinaed.data-debug-6 C:\Projects\AndroidStudio\MobileDev_2\Lesson10\data\src\debug\res
+ru.mirea.belkinaed.data-main-7 C:\Projects\AndroidStudio\MobileDev_2\Lesson10\data\src\main\res
+gradleHome-0 C:\Users\dealt\.gradle
