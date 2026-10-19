@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "86001302104",
+    "project_id": "recipeheaven-3bd1d",
+    "storage_bucket": "recipeheaven-3bd1d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:86001302104:android:9d4c37f5dac99c7ae7682d",
+        "android_client_info": {
+          "package_name": "ru.mirea.belkinaed.recipeheaven"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCg15HNH5VgrMM4-ipmlbn523IP6hhxEjM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
