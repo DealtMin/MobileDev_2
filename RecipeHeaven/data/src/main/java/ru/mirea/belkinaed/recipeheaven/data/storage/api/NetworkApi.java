@@ -11,7 +11,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class NetworkApi {
+import ru.mirea.belkinaed.recipeheaven.data.storage.WeatherStorage;
+import ru.mirea.belkinaed.recipeheaven.data.storage.models.Weather;
+
+public class NetworkApi implements WeatherStorage {
 
     private static final String DEFAULT_API_URL =
             "https://api.open-meteo.com/v1/forecast?latitude=55.751244&longitude=37.618423&current_weather=true";
@@ -28,12 +31,13 @@ public class NetworkApi {
         this.executorService = Executors.newSingleThreadExecutor();
     }
 
-    public String getWeather() {
+    @Override
+    public Weather getWeather() {
         return fetchWeather();
     }
 
-    public String fetchWeather() {
-        Future<String> future = executorService.submit(() -> {
+    public Weather fetchWeather() {
+        Future<Weather> future = executorService.submit(() -> {
             HttpURLConnection connection = null;
             try {
                 URL url = new URL(apiUrl);
@@ -58,7 +62,7 @@ public class NetworkApi {
                     if (jsonResponse.has("current_weather")) {
                         JSONObject currentWeather = jsonResponse.getJSONObject("current_weather");
                         int weatherCode = currentWeather.optInt("weathercode", 0);
-                        return parseWeatherCode(weatherCode);
+                        return new Weather(parseWeatherCode(weatherCode));
                     }
                 }
             } catch (Exception e) {
@@ -68,13 +72,13 @@ public class NetworkApi {
                     connection.disconnect();
                 }
             }
-            return "sunny";
+            return new Weather("sunny");
         });
 
         try {
             return future.get(5, TimeUnit.SECONDS);
         } catch (Exception e) {
-            return "sunny";
+            return new Weather("sunny");
         }
     }
 

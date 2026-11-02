@@ -5,8 +5,8 @@ import ru.mirea.belkinaed.recipeheaven.domain.repository.RecipeRepository;
 import ru.mirea.belkinaed.recipeheaven.domain.repository.WeatherRepository;
 
 public class GetFilteredRecipesUseCase {
-    private RecipeRepository recipeRepository;
-    private WeatherRepository weatherRepository;
+    private final RecipeRepository recipeRepository;
+    private final WeatherRepository weatherRepository;
 
     public GetFilteredRecipesUseCase(RecipeRepository recipeRepository, WeatherRepository weatherRepository) {
         this.recipeRepository = recipeRepository;
@@ -15,7 +15,7 @@ public class GetFilteredRecipesUseCase {
 
     public Recipe[] execute(){
         return recipeRepository.getRecipesByWeatherType(
-                weatherRepository.getWeather()
+                weatherRepository.getWeather().getWeather()
         );
     }
 }

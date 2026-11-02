@@ -1,150 +1,143 @@
 package ru.mirea.belkinaed.recipeheaven.data.repository;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.UserProfileChangeRequest;
+import android.content.Context;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
+import ru.mirea.belkinaed.recipeheaven.data.storage.UserStorage;
+import ru.mirea.belkinaed.recipeheaven.data.storage.firebase.FirebaseUserStorage;
+import ru.mirea.belkinaed.recipeheaven.data.storage.sharedprefs.SharedPrefUserStorage;
 import ru.mirea.belkinaed.recipeheaven.domain.models.User;
 import ru.mirea.belkinaed.recipeheaven.domain.repository.UserRepository;
 
 public class UserRepositoryImpl implements UserRepository {
 
-    private final FirebaseAuth mAuth;
+    private final UserStorage userStorage;
+    private final UserStorage authStorage;
 
     public UserRepositoryImpl() {
-        this.mAuth = FirebaseAuth.getInstance();
+        this.userStorage = null;
+        this.authStorage = new FirebaseUserStorage();
     }
 
-    public UserRepositoryImpl(FirebaseAuth mAuth) {
-        this.mAuth = mAuth;
+    public UserRepositoryImpl(Context context) {
+        this.userStorage = new SharedPrefUserStorage(context);
+        this.authStorage = new FirebaseUserStorage();
+    }
+
+    public UserRepositoryImpl(UserStorage userStorage) {
+        this.userStorage = userStorage;
+        this.authStorage = new FirebaseUserStorage();
+    }
+
+    public UserRepositoryImpl(UserStorage userStorage, UserStorage authStorage) {
+        this.userStorage = userStorage;
+        this.authStorage = authStorage;
     }
 
     @Override
     public User getUser() {
-        FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        if (firebaseUser != null) {
-            int id = firebaseUser.getUid().hashCode();
-            String name = firebaseUser.getDisplayName() != null && !firebaseUser.getDisplayName().isEmpty()
-                    ? firebaseUser.getDisplayName()
-                    : (firebaseUser.getEmail() != null ? firebaseUser.getEmail() : "User");
-            String email = firebaseUser.getEmail();
-            return new User(name, "Firebase User", email);
+        if (userStorage != null) {
+            ru.mirea.belkinaed.recipeheaven.data.storage.models.User storageUser = userStorage.get();
+            if (storageUser != null && storageUser.getName() != null && !storageUser.getName().isEmpty()) {
+                String email = storageUser.getEmail();
+                String password = storageUser.getPassword();
+                if (authStorage != null) {
+                    ru.mirea.belkinaed.recipeheaven.data.storage.models.User authUser = authStorage.get();
+                    if (authUser != null && authUser.getEmail() != null) {
+                        email = authUser.getEmail();
+                        if (password == null) {
+                            password = authUser.getPassword();
+                        }
+                    }
+                }
+                return new User(storageUser.getName(), email, password);
+            }
+        }
+
+        if (authStorage != null) {
+            ru.mirea.belkinaed.recipeheaven.data.storage.models.User authUser = authStorage.get();
+            if (authUser != null) {
+                return mapToDomain(authUser);
+            }
         }
         return null;
     }
 
     @Override
     public boolean UpdateUser(User data) {
-        FirebaseUser user = mAuth.getCurrentUser();
-        if (user == null || data == null) {
+        if (data == null) {
             return false;
         }
-        CountDownLatch latch = new CountDownLatch(1);
-        final boolean[] result = new boolean[1];
 
-        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
-                .setDisplayName(data.getName())
-                .build();
-
-        user.updateProfile(profileUpdates)
-                .addOnCompleteListener(Executors.newSingleThreadExecutor(), task -> {
-                    result[0] = task.isSuccessful();
-                    latch.countDown();
-                });
-
-        try {
-            latch.await(15, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            return false;
+        boolean localSaved = true;
+        if (userStorage != null) {
+            ru.mirea.belkinaed.recipeheaven.data.storage.models.User storageUser = mapToStorage(data);
+            localSaved = userStorage.save(storageUser);
         }
-        return result[0];
+
+        boolean authSaved = true;
+        if (authStorage != null) {
+            ru.mirea.belkinaed.recipeheaven.data.storage.models.User storageUser = mapToStorage(data);
+            authSaved = authStorage.save(storageUser);
+        }
+
+        return localSaved && authSaved;
     }
 
     @Override
     public boolean CreateUser(User data) {
         if (data == null) return false;
-        String email = data.getEmail();
-        String password = data.getPassword();
 
-        if (email == null || password == null || email.isEmpty() || password.isEmpty()) {
-            return false;
+        if (userStorage != null && data.getName() != null && !data.getName().isEmpty()) {
+            userStorage.save(new ru.mirea.belkinaed.recipeheaven.data.storage.models.User(data.getName(), "Registered User"));
         }
 
-        return CreateUser(email, password, data.getName());
+        if (authStorage != null) {
+            ru.mirea.belkinaed.recipeheaven.data.storage.models.User storageUser = mapToStorage(data);
+            return authStorage.createUser(storageUser);
+        }
+        return false;
     }
 
     @Override
     public boolean CreateUser(String email, String password) {
-        return CreateUser(email, password, null);
-    }
-
-    private boolean CreateUser(String email, String password, String displayName) {
-        if (email == null || password == null || email.isEmpty() || password.isEmpty()) {
-            return false;
+        if (authStorage != null) {
+            return authStorage.createUser(email, password);
         }
-        CountDownLatch latch = new CountDownLatch(1);
-        final boolean[] result = new boolean[1];
-
-        mAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener(Executors.newSingleThreadExecutor(), task -> {
-                    if (task.isSuccessful()) {
-                        result[0] = true;
-                        if (displayName != null && !displayName.isEmpty()) {
-                            FirebaseUser user = mAuth.getCurrentUser();
-                            if (user != null) {
-                                UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
-                                        .setDisplayName(displayName)
-                                        .build();
-                                user.updateProfile(profileUpdates);
-                            }
-                        }
-                    } else {
-                        result[0] = false;
-                    }
-                    latch.countDown();
-                });
-
-        try {
-            latch.await(15, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            return false;
-        }
-        return result[0];
+        return false;
     }
 
     @Override
     public boolean LogIn(String email, String password) {
-        if (email == null || password == null || email.isEmpty() || password.isEmpty()) {
-            return false;
+        if (authStorage != null) {
+            return authStorage.logIn(email, password);
         }
-        CountDownLatch latch = new CountDownLatch(1);
-        final boolean[] result = new boolean[1];
-
-        mAuth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(Executors.newSingleThreadExecutor(), task -> {
-                    result[0] = task.isSuccessful();
-                    latch.countDown();
-                });
-
-        try {
-            latch.await(15, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            return false;
-        }
-        return result[0];
+        return false;
     }
 
     @Override
     public boolean LogOut() {
-        try {
-            mAuth.signOut();
-            return true;
-        } catch (Exception e) {
-            return false;
+        boolean result = true;
+        if (userStorage != null) {
+            result = userStorage.logOut();
         }
+        if (authStorage != null) {
+            result = authStorage.logOut() && result;
+        }
+        return result;
+    }
+
+    private User mapToDomain(ru.mirea.belkinaed.recipeheaven.data.storage.models.User storageUser) {
+        if (storageUser == null) return null;
+        return new User(storageUser.getName(), storageUser.getEmail(), storageUser.getPassword());
+    }
+
+    private ru.mirea.belkinaed.recipeheaven.data.storage.models.User mapToStorage(User domainUser) {
+        if (domainUser == null) return null;
+        return new ru.mirea.belkinaed.recipeheaven.data.storage.models.User(
+                domainUser.getName(),
+                "Registered User",
+                domainUser.getEmail(),
+                domainUser.getPassword()
+        );
     }
 }

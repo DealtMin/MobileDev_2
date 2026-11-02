@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        UserRepository userRepository = new UserRepositoryImpl();
+        UserRepository userRepository = new UserRepositoryImpl(this);
         logOutUserUseCase = new LogOutUserUseCase(userRepository);
 
         Button btnLogout = findViewById(R.id.btnLogout);

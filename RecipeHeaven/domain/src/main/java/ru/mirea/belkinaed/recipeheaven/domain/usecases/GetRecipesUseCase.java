@@ -3,10 +3,10 @@ package ru.mirea.belkinaed.recipeheaven.domain.usecases;
 import ru.mirea.belkinaed.recipeheaven.domain.models.Recipe;
 import ru.mirea.belkinaed.recipeheaven.domain.repository.RecipeRepository;
 
-public class GetRecipesUseCaseUseCase {
+public class GetRecipesUseCase {
     private RecipeRepository recipeRepository;
 
-    public GetRecipesUseCaseUseCase(RecipeRepository recipeRepository) {
+    public GetRecipesUseCase(RecipeRepository recipeRepository) {
         this.recipeRepository = recipeRepository;
     }
 

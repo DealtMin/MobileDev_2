@@ -2,6 +2,8 @@ package ru.mirea.belkinaed.recipeheaven.presentation;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
@@ -11,8 +13,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-
-import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.concurrent.Executors;
 
@@ -37,6 +37,15 @@ public class AuthActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        UserRepository userRepository = new UserRepositoryImpl(this);
+        logInUserUseCase = new LogInUserUseCase(userRepository);
+        createUserUseCase = new CreateUserUseCase(userRepository);
+
+        if (userRepository.getUser() != null) {
+            new Handler(Looper.getMainLooper()).post(this::navigateToMain);
+            return;
+        }
+
         setContentView(R.layout.activity_auth);
 
         etEmail = findViewById(R.id.etEmail);
@@ -45,14 +54,6 @@ public class AuthActivity extends AppCompatActivity {
         btnRegister = findViewById(R.id.btnRegister);
         tvStatus = findViewById(R.id.tvStatus);
         progressBar = findViewById(R.id.progressBar);
-
-        UserRepository userRepository = new UserRepositoryImpl();
-        logInUserUseCase = new LogInUserUseCase(userRepository);
-        createUserUseCase = new CreateUserUseCase(userRepository);
-
-        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
-            navigateToMain();
-        }
 
         btnLogin.setOnClickListener(v -> performLogin());
         btnRegister.setOnClickListener(v -> performRegister());
@@ -122,6 +123,9 @@ public class AuthActivity extends AppCompatActivity {
     }
 
     private void navigateToMain() {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
         Intent intent = new Intent(AuthActivity.this, MainActivity.class);
         startActivity(intent);
         finish();
