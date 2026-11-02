@@ -29,11 +29,10 @@ public class SharedPrefMovieStorage implements MovieStorage {
     }
     @Override
     public boolean save(Movie movie) {
-        sharedPreferences.edit().putString(KEY, movie.getName());
-        sharedPreferences.edit().putString(DATE_KEY,
-                String.valueOf(LocalDate.now()));
-        sharedPreferences.edit().putInt(ID_KEY, 1);
-        sharedPreferences.edit().commit();
-        return true;
+        return sharedPreferences.edit()
+                .putString(KEY, movie.getName())
+                .putString(DATE_KEY, movie.getLocalDate())
+                .putInt(ID_KEY, movie.getId())
+                .commit();
     }
 }
