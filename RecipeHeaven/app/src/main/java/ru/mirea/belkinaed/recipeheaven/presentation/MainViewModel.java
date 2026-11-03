@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 
 import ru.mirea.belkinaed.recipeheaven.domain.models.Recipe;
 import ru.mirea.belkinaed.recipeheaven.domain.usecases.CreateRecipeUseCase;
+import ru.mirea.belkinaed.recipeheaven.domain.usecases.GetFilteredRecipesUseCase;
 import ru.mirea.belkinaed.recipeheaven.domain.usecases.GetRecipesUseCase;
 import ru.mirea.belkinaed.recipeheaven.domain.usecases.GetUserUseCase;
 import ru.mirea.belkinaed.recipeheaven.domain.usecases.GetWeatherUseCase;
@@ -25,6 +26,7 @@ public class MainViewModel extends ViewModel {
     private final GetRecipesUseCase getRecipesUseCase;
     private final CreateRecipeUseCase createRecipeUseCase;
     private final GetWeatherUseCase getWeatherUseCase;
+    private final GetFilteredRecipesUseCase getFilteredRecipesUseCase;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private final MutableLiveData<Boolean> isUserLoggedIn = new MutableLiveData<>();
@@ -38,12 +40,14 @@ public class MainViewModel extends ViewModel {
                          GetUserUseCase getUserUseCase,
                          GetRecipesUseCase getRecipesUseCase,
                          CreateRecipeUseCase createRecipeUseCase,
-                         GetWeatherUseCase getWeatherUseCase) {
+                         GetWeatherUseCase getWeatherUseCase,
+                         GetFilteredRecipesUseCase getFilteredRecipesUseCase) {
         this.logOutUserUseCase = logOutUserUseCase;
         this.getUserUseCase = getUserUseCase;
         this.getRecipesUseCase = getRecipesUseCase;
         this.createRecipeUseCase = createRecipeUseCase;
         this.getWeatherUseCase = getWeatherUseCase;
+        this.getFilteredRecipesUseCase = getFilteredRecipesUseCase;
 
         setupMediatorLiveData();
         loadData();
@@ -64,15 +68,8 @@ public class MainViewModel extends ViewModel {
         String weather = (rawWeather == null) ? "sunny" : rawWeather;
         List<Recipe> recipes = (rawRecipes == null) ? new ArrayList<>() : rawRecipes;
 
-        List<Recipe> filteredRecipes = new ArrayList<>();
-        for (Recipe r : recipes) {
-            if (r.getType() != null && r.getType().equalsIgnoreCase(weather)) {
-                filteredRecipes.add(r);
-            }
-        }
-
         combinedDataLiveData.setValue(
-                new CombinedRecipeData(weather, filteredRecipes.isEmpty() ? recipes : filteredRecipes)
+                new CombinedRecipeData(weather, recipes)
         );
     }
 
@@ -111,6 +108,14 @@ public class MainViewModel extends ViewModel {
             networkWeatherLiveData.postValue(weather);
 
             List<Recipe> recipeList = (existing != null) ? Arrays.asList(existing) : new ArrayList<>();
+            dbRecipesLiveData.postValue(recipeList);
+        });
+    }
+
+    public void filterByWeather() {
+        executor.execute(() -> {
+            Recipe[] filtered = getFilteredRecipesUseCase.execute();
+            List<Recipe> recipeList = (filtered != null) ? Arrays.asList(filtered) : new ArrayList<>();
             dbRecipesLiveData.postValue(recipeList);
         });
     }

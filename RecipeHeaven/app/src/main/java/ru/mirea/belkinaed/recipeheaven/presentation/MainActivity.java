@@ -25,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvRecipes;
     private Button btnLogout;
     private Button btnLogin;
+    private Button btnFilterByWeather;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
         tvRecipes = findViewById(R.id.tvRecipes);
         btnLogout = findViewById(R.id.btnLogout);
         btnLogin = findViewById(R.id.btnLogin);
+        btnFilterByWeather = findViewById(R.id.btnFilterByWeather);
 
         viewModel = new ViewModelProvider(this, new MainViewModelFactory(this)).get(MainViewModel.class);
 
@@ -81,6 +83,8 @@ public class MainActivity extends AppCompatActivity {
                 finish();
             }
         });
+
+        btnFilterByWeather.setOnClickListener(v -> viewModel.filterByWeather());
 
         btnLogout.setOnClickListener(v -> viewModel.logout());
 

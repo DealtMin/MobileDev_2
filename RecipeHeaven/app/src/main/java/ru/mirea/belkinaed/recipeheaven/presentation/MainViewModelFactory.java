@@ -13,6 +13,7 @@ import ru.mirea.belkinaed.recipeheaven.domain.repository.RecipeRepository;
 import ru.mirea.belkinaed.recipeheaven.domain.repository.UserRepository;
 import ru.mirea.belkinaed.recipeheaven.domain.repository.WeatherRepository;
 import ru.mirea.belkinaed.recipeheaven.domain.usecases.CreateRecipeUseCase;
+import ru.mirea.belkinaed.recipeheaven.domain.usecases.GetFilteredRecipesUseCase;
 import ru.mirea.belkinaed.recipeheaven.domain.usecases.GetRecipesUseCase;
 import ru.mirea.belkinaed.recipeheaven.domain.usecases.GetUserUseCase;
 import ru.mirea.belkinaed.recipeheaven.domain.usecases.GetWeatherUseCase;
@@ -40,13 +41,15 @@ public class MainViewModelFactory implements ViewModelProvider.Factory {
             GetRecipesUseCase getRecipesUseCase = new GetRecipesUseCase(recipeRepository);
             CreateRecipeUseCase createRecipeUseCase = new CreateRecipeUseCase(recipeRepository);
             GetWeatherUseCase getWeatherUseCase = new GetWeatherUseCase(weatherRepository);
+            GetFilteredRecipesUseCase getFilteredRecipesUseCase = new GetFilteredRecipesUseCase(recipeRepository, weatherRepository);
 
             return (T) new MainViewModel(
                     logOutUserUseCase,
                     getUserUseCase,
                     getRecipesUseCase,
                     createRecipeUseCase,
-                    getWeatherUseCase
+                    getWeatherUseCase,
+                    getFilteredRecipesUseCase
             );
         }
         throw new IllegalArgumentException("Unknown ViewModel class: " + modelClass.getName());
