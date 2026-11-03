@@ -2,9 +2,6 @@ package ru.mirea.belkinaed.recipeheaven.presentation;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -13,14 +10,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-
-import java.util.concurrent.Executors;
+import androidx.lifecycle.ViewModelProvider;
 
 import ru.mirea.belkinaed.recipeheaven.R;
-import ru.mirea.belkinaed.recipeheaven.data.repository.UserRepositoryImpl;
-import ru.mirea.belkinaed.recipeheaven.domain.repository.UserRepository;
-import ru.mirea.belkinaed.recipeheaven.domain.usecases.CreateUserUseCase;
-import ru.mirea.belkinaed.recipeheaven.domain.usecases.LogInUserUseCase;
 
 public class AuthActivity extends AppCompatActivity {
 
@@ -31,20 +23,22 @@ public class AuthActivity extends AppCompatActivity {
     private TextView tvStatus;
     private ProgressBar progressBar;
 
-    private LogInUserUseCase logInUserUseCase;
-    private CreateUserUseCase createUserUseCase;
+    private AuthViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        UserRepository userRepository = new UserRepositoryImpl(this);
-        logInUserUseCase = new LogInUserUseCase(userRepository);
-        createUserUseCase = new CreateUserUseCase(userRepository);
 
-        if (userRepository.getUser() != null) {
-            new Handler(Looper.getMainLooper()).post(this::navigateToMain);
-            return;
-        }
+        // Interaction with domain layer is carried out via AuthViewModel
+        viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
+
+        viewModel.getNavigateToMain().observe(this, shouldNavigate -> {
+            if (Boolean.TRUE.equals(shouldNavigate)) {
+                navigateToMain();
+            }
+        });
+
+        viewModel.checkUserLoggedIn();
 
         setContentView(R.layout.activity_auth);
 
@@ -55,6 +49,23 @@ public class AuthActivity extends AppCompatActivity {
         tvStatus = findViewById(R.id.tvStatus);
         progressBar = findViewById(R.id.progressBar);
 
+        // UI state updating via LiveData
+        viewModel.getStatusMessage().observe(this, status -> {
+            if (status != null && !status.isEmpty()) {
+                if (status.equals("Успешный вход!") || status.equals("Регистрация успешна!")) {
+                    Toast.makeText(AuthActivity.this, status, Toast.LENGTH_SHORT).show();
+                } else {
+                    tvStatus.setText(status);
+                }
+            } else {
+                tvStatus.setText("");
+            }
+        });
+
+        viewModel.getIsLoading().observe(this, isLoading ->
+                showLoading(Boolean.TRUE.equals(isLoading))
+        );
+
         btnLogin.setOnClickListener(v -> performLogin());
         btnRegister.setOnClickListener(v -> performRegister());
     }
@@ -62,58 +73,13 @@ public class AuthActivity extends AppCompatActivity {
     private void performLogin() {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
-
-        if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
-            tvStatus.setText("Заполните все поля");
-            return;
-        }
-
-        showLoading(true);
-        tvStatus.setText("");
-
-        Executors.newSingleThreadExecutor().execute(() -> {
-            boolean success = logInUserUseCase.execute(email, password);
-            runOnUiThread(() -> {
-                showLoading(false);
-                if (success) {
-                    Toast.makeText(AuthActivity.this, "Успешный вход!", Toast.LENGTH_SHORT).show();
-                    navigateToMain();
-                } else {
-                    tvStatus.setText("Ошибка авторизации. Проверьте данные.");
-                }
-            });
-        });
+        viewModel.login(email, password);
     }
 
     private void performRegister() {
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
-
-        if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
-            tvStatus.setText("Заполните все поля");
-            return;
-        }
-
-        if (password.length() < 6) {
-            tvStatus.setText("Пароль должен быть не менее 6 символов");
-            return;
-        }
-
-        showLoading(true);
-        tvStatus.setText("");
-
-        Executors.newSingleThreadExecutor().execute(() -> {
-            boolean success = createUserUseCase.execute(email, password);
-            runOnUiThread(() -> {
-                showLoading(false);
-                if (success) {
-                    Toast.makeText(AuthActivity.this, "Регистрация успешна!", Toast.LENGTH_SHORT).show();
-                    navigateToMain();
-                } else {
-                    tvStatus.setText("Ошибка регистрации. Пользователь уже существует или неверные данные.");
-                }
-            });
-        });
+        viewModel.register(email, password);
     }
 
     private void showLoading(boolean isLoading) {
