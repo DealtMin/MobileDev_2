@@ -20,6 +20,7 @@ public class AuthActivity extends AppCompatActivity {
     private EditText etPassword;
     private Button btnLogin;
     private Button btnRegister;
+    private Button btnGuest;
     private TextView tvStatus;
     private ProgressBar progressBar;
 
@@ -30,7 +31,7 @@ public class AuthActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         // Interaction with domain layer is carried out via AuthViewModel
-        viewModel = new ViewModelProvider(this).get(AuthViewModel.class);
+        viewModel = new ViewModelProvider(this, new AuthViewModelFactory(this)).get(AuthViewModel.class);
 
         viewModel.getNavigateToMain().observe(this, shouldNavigate -> {
             if (Boolean.TRUE.equals(shouldNavigate)) {
@@ -46,6 +47,7 @@ public class AuthActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
         btnRegister = findViewById(R.id.btnRegister);
+        btnGuest = findViewById(R.id.btnGuest);
         tvStatus = findViewById(R.id.tvStatus);
         progressBar = findViewById(R.id.progressBar);
 
@@ -68,6 +70,7 @@ public class AuthActivity extends AppCompatActivity {
 
         btnLogin.setOnClickListener(v -> performLogin());
         btnRegister.setOnClickListener(v -> performRegister());
+        btnGuest.setOnClickListener(v -> viewModel.loginAsGuest());
     }
 
     private void performLogin() {
@@ -86,6 +89,7 @@ public class AuthActivity extends AppCompatActivity {
         progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         btnLogin.setEnabled(!isLoading);
         btnRegister.setEnabled(!isLoading);
+        btnGuest.setEnabled(!isLoading);
     }
 
     private void navigateToMain() {

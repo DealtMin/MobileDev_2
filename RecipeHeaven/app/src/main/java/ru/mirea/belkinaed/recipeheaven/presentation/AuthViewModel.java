@@ -1,24 +1,21 @@
 package ru.mirea.belkinaed.recipeheaven.presentation;
 
-import android.app.Application;
 import android.text.TextUtils;
 
-import androidx.annotation.NonNull;
-import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import ru.mirea.belkinaed.recipeheaven.data.repository.UserRepositoryImpl;
-import ru.mirea.belkinaed.recipeheaven.domain.repository.UserRepository;
 import ru.mirea.belkinaed.recipeheaven.domain.usecases.CreateUserUseCase;
+import ru.mirea.belkinaed.recipeheaven.domain.usecases.GetUserUseCase;
 import ru.mirea.belkinaed.recipeheaven.domain.usecases.LogInUserUseCase;
 
-public class AuthViewModel extends AndroidViewModel {
+public class AuthViewModel extends ViewModel {
 
-    private final UserRepository userRepository;
+    private final GetUserUseCase getUserUseCase;
     private final LogInUserUseCase logInUserUseCase;
     private final CreateUserUseCase createUserUseCase;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -27,11 +24,12 @@ public class AuthViewModel extends AndroidViewModel {
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> navigateToMain = new MutableLiveData<>(false);
 
-    public AuthViewModel(@NonNull Application application) {
-        super(application);
-        this.userRepository = new UserRepositoryImpl(application);
-        this.logInUserUseCase = new LogInUserUseCase(userRepository);
-        this.createUserUseCase = new CreateUserUseCase(userRepository);
+    public AuthViewModel(GetUserUseCase getUserUseCase,
+                         LogInUserUseCase logInUserUseCase,
+                         CreateUserUseCase createUserUseCase) {
+        this.getUserUseCase = getUserUseCase;
+        this.logInUserUseCase = logInUserUseCase;
+        this.createUserUseCase = createUserUseCase;
     }
 
     public LiveData<String> getStatusMessage() {
@@ -47,9 +45,13 @@ public class AuthViewModel extends AndroidViewModel {
     }
 
     public void checkUserLoggedIn() {
-        if (userRepository.getUser() != null) {
+        if (getUserUseCase.execute() != null) {
             navigateToMain.setValue(true);
         }
+    }
+
+    public void loginAsGuest() {
+        navigateToMain.setValue(true);
     }
 
     public void login(String email, String password) {
